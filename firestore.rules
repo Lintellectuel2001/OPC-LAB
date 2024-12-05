@@ -1,0 +1,50 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /samples/{sampleId} {
+      // Helper functions
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      
+      function validateSampleFields() {
+        let requiredFields = [
+          'sampleNumber',
+          'fabricationDate',
+          'day7Date',
+          'day14Date',
+          'day28Date',
+          'client',
+          'site',
+          'concreteType',
+          'elementCoule'
+        ];
+        
+        let data = request.resource.data;
+        
+        return data.keys().hasAll(requiredFields) &&
+          data.sampleNumber is string &&
+          data.fabricationDate is string &&
+          data.day7Date is string &&
+          data.day14Date is string &&
+          data.day28Date is string &&
+          data.client is string &&
+          data.site is string &&
+          data.concreteType is string &&
+          data.elementCoule is string &&
+          (data.day7Result == null || data.day7Result is number) &&
+          (data.day14Result == null || data.day14Result is number) &&
+          (data.day28Result == null || data.day28Result is number);
+      }
+
+      // Read rules
+      allow read: if isSignedIn();
+      
+      // Write rules
+      allow create: if isSignedIn() && validateSampleFields();
+      allow update: if isSignedIn() && validateSampleFields();
+      allow delete: if isSignedIn();
+    }
+  }
+}
